@@ -1,4 +1,4 @@
-# NER models for the BioSemantics Corpus
+# NER Models for the BioSemantics Corpus
 
 [Named entity recognition](https://en.wikipedia.org/wiki/Named-entity_recognition) (NER) is an NLP task of great practical importance. While ubiquitous, it can still be probelmatic in very specialized domains like the pharmacological domain. While in 2025 there is a belief that NER can be solved by large language models (LLMs), bet it self-hosted or through commercial APIs, it turns out that it has also become extremely easy to fine-tune pre-trained BERT/encoder-only SOTA models. In this demo, I train and deploy a biomedical SOTA NER model with a few lines of code, using HuggingFace. 
 
