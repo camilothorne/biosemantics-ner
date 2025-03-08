@@ -8,7 +8,7 @@ For this demo, I rely on the [BioSemantics](https://web.archive.org/web/20171028
 
 <div align="center">
 
-<img src="images/biosem-sample.png" width="500" height="250" />
+<img src="images/biosem-sample.png" width="700" height="280" />
 
 </div>
 
@@ -22,23 +22,27 @@ For the current demo, I used only its USPTO patents and performed a stratified s
 
 ## DistilBERT model
 
-I started from a DistilBERT (base) pre-trained model (`distilbert/distilbert-base-cased`at HuggingFace). This model was fine-tuned for 3 pochs, with a batch size of 64, a leraning rate of 0.00002 and a weight decay of 0.01. I used 219,691 sentences (80% of the training set) to train and 24,411 sentences (20% of the training set) to validate the model. BERT standard training obkectives and loss functions were used. Training took approximately 1H on a T4 GPU with 16GB of VRAM (Google Colab). For the learning curve, please check `images/loss_distilbert.png`. As SGD algorithm I used Adam. DistilBERT is a model of circa 81M parameters.
+I started from a DistilBERT (base) pre-trained model (`distilbert/distilbert-base-cased`at HuggingFace). This model was fine-tuned for 3 pochs, with a batch size of 64, a leraning rate of 0.00002 and a weight decay of 0.01. I used 219,691 sentences (80% of the training set) to train and 24,411 sentences (20% of the training set) to validate the model. BERT standard training obkectives and loss functions were used. Training took approximately 1 hour on a T4 GPU with 16GB of VRAM (Google Colab). For the learning curve, please check `images/loss_distilbert.png`. As SGD algorithm I used Adam. DistilBERT is a model of circa 81M parameters.
 
 The inference objective of DistilBERT looks like
+
 $$
 p(c_1,\dots,c_n|w_1,\dots,w_n) = \prod_{i=1}^n \text{softmax} (\Psi(c_i,w_1,\dots,w_{i-1}))
 $$
+
 and it is maximized via greedy (best first) decoding.
 
 ## CRF++ model
 
-I used as baseline a NER model that was very popular prior to the emergence of deep learning NER models -- a 1st order [linear chain conditional random field](https://aman.ai/primers/ai/conditional-random-fields/#linear-chain-crfs) (CRF), in its [CRF++](https://taku910.github.io/crfpp/) implementation. This model uses a form of batch learning for gradient descent known as [LBFGS](https://en.wikipedia.org/wiki/Limited-memory_BFGS), and a variant of cross-entropy as loss function. CRF++ did first a cross-validation to estimate its hyperparamters: 361,2432 uni- and bi-gram features (with a frequency higher than 10), a `C` coefficient of 1.0, a starting learning rate (called `eta`) of 0.0001 and a shrinking size of 20. I trained it for 100 iterations (took an hour on an M2 chip using 8 threads). For the learning curve, please check `images/loss_crf++.png`. Note that every feature $f_k$ gives rise to a model parameter $\theta_k$. So, the model trained has circa 360K parameters (i.e. was crica 20x smaller than the DistilBERT model).
+I used as baseline a NER model that was very popular prior to the emergence of deep learning NER models: a 1st order [linear chain conditional random field](https://aman.ai/primers/ai/conditional-random-fields/#linear-chain-crfs) (CRF), in its [CRF++](https://taku910.github.io/crfpp/) implementation. This model uses a form of batch learning for gradient descent known as [LBFGS](https://en.wikipedia.org/wiki/Limited-memory_BFGS), and a variant of cross-entropy as loss function. CRF++ did first a cross-validation to estimate its hyperparameters: 361,2432 uni- and bi-gram features (with a frequency higher than 10), a `C` coefficient of 1.0, a learning rate (`eta`) of 0.0001 and a shrinking size of 20. I trained it for 100 iterations (took an hour on an M2 chip using 8 threads). For the learning curve, please check `images/loss_crf++.png`. Note that every feature $f_k$ gives rise to a model parameter $\theta_k$. Thus, the model trained has circa 360K parameters (i.e. was circa 20x smaller than the DistilBERT model). I used the complete training set.
 
 Linear-chain CRFs rely on a so-called **autoregressive** inference objective, wherein the label $c_i$ predicted at time step $i$ is used as input (together with the input sequence up to $i$) to predict label $c_{i+1}$
+
 $$
 p(c_1,\dots,c_n|w_1,\dots,w_n) = \frac{1}{Z} \prod_{i=1}^n \exp(  \sum_{k=1}^t \theta_{k} f_k(c_i,c_{i-1},
 w_1,\dots,w_n) )
 $$
+
 and is typically maximized via [Viterbi](https://frazierbutler.medium.com/intro-to-the-viterbi-algorithm-8f41c3f43cf3)  decoding (a dynamic algorithm).
 
 ## Performance assessment
